@@ -2,6 +2,7 @@ uint8_t podatki;
 uint32_t pozicija_za_char=0;
 uint32_t pozicija_za_konec=0;
 char vnos[100];
+uint32_t y_size_global;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -41,6 +42,8 @@ int main(void)
 	  hTSs->Height = y_size;
 	  hTSs->Orientation = TS_SWAP_XY;
 	  hTSs->Accuracy = 5;
+
+	  y_size_global=y_size;
 	  /* Touchscreen initialization */
 	  BSP_TS_Init(0, hTSs);
 
@@ -49,7 +52,8 @@ int main(void)
 
 	  USART3_Init(&huart3);
 	  //HAL_UART_Receive_IT(&huart3, &podatki, 1);
-
+	  TETRIS_SCORE_SETUP();
+	  TETRIS_SCORE_DISPLAY(123);
 	  /* Infinite loop */
 	  while (1)
 	  {
@@ -128,4 +132,252 @@ int main(void)
 		while(!((USART3->ISR)&(1<<6)));
 		USART3->TDR='\n';*/
 	  }
+}
+
+
+
+/* UART2 Interrupt Service Routine */
+//void USART3_IRQHandler(void)
+//{
+//  HAL_UART_IRQHandler(&huart3);
+//}
+
+void TETRIS_SCORE_SETUP()
+{
+	const uint8_t pixel_size=3;
+	const uint8_t x_offset=10;
+	const uint8_t y_offset=10;
+
+	uint8_t score_napis[5][9][8]={
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,1,0,0,0,0,0},
+	 {0,0,1,1,1,0,0,0},
+	 {0,0,0,1,1,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,0,1,1,1,1,0,0}
+	},
+	{{0,0,1,1,1,1,1,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,0,1,1,1,1,1,0},
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,0,1,1,1,1,0,0},
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,1,1,0},
+	 {0,1,1,1,1,1,0,0},
+	 {0,1,0,0,1,0,0,0},
+	 {0,1,0,0,1,1,0,0},
+	 {0,1,0,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0}
+	},
+	{{0,0,1,1,1,1,1,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,1,1,1,1,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,0,1,1,1,1,1,0}
+	}
+	};
+
+	UTIL_LCD_Clear(UTIL_LCD_COLOR_WHITE);
+
+	for(uint32_t crta=0;crta<y_size_global;crta++)
+	{
+		UTIL_LCD_SetPixel(pixel_size*8+20,crta,UTIL_LCD_COLOR_RED);
+		UTIL_LCD_SetPixel(pixel_size*8+21,crta,UTIL_LCD_COLOR_RED);
+	}
+
+	for(uint32_t score=y_size_global-y_offset;score>(y_size_global-y_offset-5*8*pixel_size);score-=pixel_size)
+	{
+	  for(uint8_t score_x=0;score_x<9;score_x++)
+	  {
+		for(uint8_t y_temp=0;y_temp<pixel_size;y_temp++)
+		{
+			for(uint8_t x_temp=0;x_temp<pixel_size;x_temp++)
+			{
+				if(score_napis[((y_size_global-y_offset)-score)/pixel_size/8][score_x][((y_size_global-y_offset)-score)/pixel_size-((y_size_global-y_offset)-score)/pixel_size/8*8]==1)UTIL_LCD_SetPixel(x_offset+score_x*pixel_size+x_temp,score-y_temp,UTIL_LCD_COLOR_RED);
+
+			}
+		}
+	  }
+	}
+}
+
+
+uint32_t potenca(uint32_t stevilka,uint32_t POTENCA)
+{
+	if(POTENCA==0)
+	return 1;
+	else
+	{
+	for(uint32_t ponovitev=0;ponovitev<(POTENCA-1);ponovitev++)
+	{
+		stevilka*=stevilka;
+	}
+	}
+	return stevilka;
+
+	}
+
+void TETRIS_SCORE_DISPLAY(uint32_t score)
+{
+	const uint32_t score_start_y=145;
+	const uint8_t pixel_size=3;
+	const uint8_t x_offset=15;
+	const uint8_t y_offset=10;
+
+	uint8_t score_cifre[10][9][8]={
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,0,0,1,1,1,0},
+	 {0,1,0,0,1,0,1,0},
+	 {0,1,0,1,1,0,1,0},
+	 {0,1,0,1,0,0,1,0},
+	 {0,1,1,1,0,0,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,0,1,1,1,1,0,0}
+	},
+	{{0,0,0,1,1,0,0,0},
+	 {0,0,1,1,1,0,0,0},
+	 {0,1,1,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,1,1,1,1,1,1,0},
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,0,0,0,1,1,0},
+	 {0,0,0,1,1,1,0,0},
+	 {0,0,1,1,0,0,0,0},
+	 {0,1,1,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,1,1,1,1,1,0},
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,0,0,0,1,1,0},
+	 {0,0,0,0,1,1,0,0},
+	 {0,0,0,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,0,1,1,1,1,0,0},
+	},
+	{{0,0,0,0,1,1,0,0},
+	 {0,0,0,1,1,0,0,0},
+	 {0,0,1,1,0,0,0,0},
+	 {0,1,1,0,0,0,0,0},
+	 {0,1,0,0,1,0,0,0},
+	 {0,1,1,1,1,1,1,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,0,1,0,0,0}
+	},
+	{{0,1,1,1,1,1,1,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,1,1,1,1,0,0},
+	 {0,0,0,0,0,1,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,1,0,0,1,1,0},
+	 {0,0,1,1,1,1,0,0}
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,0,0,0,0,0,0},
+	 {0,1,1,1,1,1,0,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,1,1,1,1,0,0}
+	},
+	{{0,1,1,1,1,1,1,0},
+	 {0,0,0,0,0,0,1,0},
+	 {0,0,0,0,0,0,1,0},
+	 {0,0,0,0,0,1,1,0},
+	 {0,0,0,0,1,1,0,0},
+	 {0,0,0,0,1,0,0,0},
+	 {0,0,0,1,1,0,0,0},
+	 {0,0,0,1,0,0,0,0},
+	 {0,0,0,1,0,0,0,0}
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,1,1,1,1,0,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,1,1,1,1,0,0}
+	},
+	{{0,0,1,1,1,1,0,0},
+	 {0,1,1,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,1,1,1,1,0,0},
+	 {0,0,0,0,0,0,1,0},
+	 {0,0,0,0,0,0,1,0},
+	 {0,1,0,0,0,0,1,0},
+	 {0,0,1,1,1,1,0,0}
+	},
+	};
+
+	uint32_t st_stevk=1;
+	uint32_t cifra_copy=score;
+
+	while(cifra_copy>9)
+	{
+			cifra_copy/=10;
+			st_stevk++;
+	}
+
+
+	//prvi for (score) je čudn in tretji naslov/argument arraya
+	cifra_copy=score;
+	uint32_t stevke=st_stevk; //kopija da for loop normalno tece
+	for(uint32_t score=score_start_y-y_offset;score>(score_start_y-y_offset-st_stevk*8*pixel_size);score-=pixel_size)
+	{
+	  for(uint8_t score_x=0;score_x<9;score_x++)
+	  {
+		for(uint8_t y_temp=0;y_temp<pixel_size;y_temp++)
+		{
+			for(uint8_t x_temp=0;x_temp<pixel_size;x_temp++)
+			{
+				if(score_cifre[cifra_copy/potenca(10,(stevke-1))][score_x][((score_start_y-y_offset)-score)/pixel_size-((score_start_y-y_offset)-score)/pixel_size/8*8]==1)UTIL_LCD_SetPixel(x_offset+score_x*pixel_size+x_temp,score-y_temp,UTIL_LCD_COLOR_BLUE);
+			}
+		}
+	  }
+	  cifra_copy%=potenca(10,(stevke-1));
+	  stevke--;
+	}
+
 }
