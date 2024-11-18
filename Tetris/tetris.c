@@ -123,7 +123,8 @@ else if (rotation==1 || rotation==3)
   */
 
 
-
+/*
+//test:
 	  UTIL_LCD_Clear(UTIL_LCD_COLOR_WHITE);
 
 	  for(uint8_t a=0;a<5;a++)
@@ -133,3 +134,4 @@ else if (rotation==1 || rotation==3)
 			  block_draw(a,UTIL_LCD_COLOR_LIGHTGREEN,20+r*100,20+a*50,r);
 		  }
 	  }
+*/
