@@ -1,1 +1,1 @@
-Project for my Masters class RMVS. Designed for the STM32F4xxx board.
+Project for my Masters class RMVS. Designed for the STM32H750B-DK board.
